@@ -39,7 +39,7 @@ if not FRONTEND_DIR.exists():
 # Base URL used to redirect users to the frontend after OAuth/login flows.
 # Make this configurable so local testing (with port-forward) and deployed
 # environments can use the appropriate host/port.
-FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:8080")
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost")
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
@@ -405,17 +405,17 @@ async def google_login(request: Request):
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="Google OAuth no está configurado en el servidor")
     
-    # Para desarrollo local, permitir sobreescribir la redirect URI desde una variable de entorno.
-    # Por defecto usamos localhost:8000 para que el port-forward a ese puerto funcione en pruebas locales.
-    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
-
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-        # Ya se verifica más arriba, pero dejamos un log claro aquí.
-        print("⚠️  ADVERTENCIA: GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no están configurados")
-        print(f"🔐 Usando redirect_uri (pero auth no configurado): {redirect_uri}")
-    else:
-        print(f"🔐 Iniciando login con Google - Redirect URI: {redirect_uri}")
-
+    # Usar la redirect URI desde variables de entorno o construirla basada en el host recibido
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    
+    if not redirect_uri:
+        # Fallback: construir basado en el header X-Forwarded-Proto y Host (para Docker/proxy reverso)
+        scheme = request.headers.get("X-Forwarded-Proto", "http")
+        host = request.headers.get("X-Forwarded-Host", request.headers.get("Host", "localhost"))
+        redirect_uri = f"{scheme}://{host}/auth/google/callback"
+    
+    print(f"🔐 Iniciando login con Google - Redirect URI: {redirect_uri}")
+    
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
