@@ -66,27 +66,31 @@ app.add_middleware(
 # Configurar OAuth (Google)
 oauth = OAuth()
 
-# Crear cliente HTTP asíncrono para OAuth (necesario para Authlib con FastAPI)
-httpx_client = httpx.AsyncClient(timeout=30.0)
-
 # Verificar que las variables de entorno estén configuradas
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost/auth/google/callback")
+
+print(f"🔧 Configurando Google OAuth...")
+print(f"   GOOGLE_CLIENT_ID: {GOOGLE_CLIENT_ID[:20] + '...' if GOOGLE_CLIENT_ID else 'NO CONFIGURADO'}")
+print(f"   GOOGLE_REDIRECT_URI: {GOOGLE_REDIRECT_URI}")
+print(f"   FRONTEND_BASE_URL: {FRONTEND_BASE_URL}")
 
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
     print("⚠️  ADVERTENCIA: GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no están configurados")
     print("⚠️  La autenticación con Google no funcionará sin estas variables")
 else:
+    # Configurar cliente OAuth con httpx (requerido para async en FastAPI)
     oauth.register(
         name="google",
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
         server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
         client_kwargs={
-            "scope": "openid email profile",
-            "timeout": 30.0
+            "scope": "openid email profile"
         }
     )
+    print("✅ Google OAuth configurado correctamente")
 
 # Configuración de la conexión a la base de datos local
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -403,74 +407,103 @@ auth_router = APIRouter()
 async def google_login(request: Request):
     """Inicia el flujo de OAuth2 con Google redirigiendo al consentimiento."""
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        print("❌ Error: Google OAuth no está configurado")
         raise HTTPException(status_code=500, detail="Google OAuth no está configurado en el servidor")
-    
-    # Para desarrollo local, permitir sobreescribir la redirect URI desde una variable de entorno.
-    # Por defecto usamos localhost:8000 para que el port-forward a ese puerto funcione en pruebas locales.
-    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
 
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-        # Ya se verifica más arriba, pero dejamos un log claro aquí.
-        print("⚠️  ADVERTENCIA: GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no están configurados")
-        print(f"🔐 Usando redirect_uri (pero auth no configurado): {redirect_uri}")
-    else:
-        print(f"🔐 Iniciando login con Google - Redirect URI: {redirect_uri}")
+    try:
+        print(f"🔐 Iniciando login con Google")
+        print(f"   Redirect URI: {GOOGLE_REDIRECT_URI}")
 
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+        # Redirigir a Google para autenticación
+        response = await oauth.google.authorize_redirect(request, GOOGLE_REDIRECT_URI)
+        print("✅ Redirección a Google iniciada correctamente")
+        return response
+    except Exception as e:
+        print(f"❌ Error al iniciar login con Google: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al iniciar autenticación con Google: {str(e)}")
 
 
 @auth_router.get("/auth/google/callback")
 async def google_auth_callback(request: Request):
     """Callback que Google llamará tras la autenticación."""
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        print("❌ Error: Google OAuth no está configurado")
         raise HTTPException(status_code=500, detail="Google OAuth no está configurado en el servidor")
-    
+
     try:
         print("🔄 Procesando callback de Google...")
+        print(f"   URL del callback: {request.url}")
+        print(f"   Query params: {dict(request.query_params)}")
+
+        # Obtener el token de acceso de Google
         token = await oauth.google.authorize_access_token(request)
-        print("✅ Token de acceso recibido")
+        print("✅ Token de acceso recibido correctamente")
+
     except Exception as e:
-        print(f"❌ Error en autorización de Google: {e}")
-        raise HTTPException(status_code=400, detail=f"Error en autorización de Google: {e}")
+        error_type = type(e).__name__
+        error_msg = str(e)
+        print(f"❌ Error en autorización de Google: {error_type}: {error_msg}")
+        import traceback
+        traceback.print_exc()
+
+        # Redirigir al frontend con error
+        error_url = f"{FRONTEND_BASE_URL}/index.html?google_login_error=true&error={error_type}"
+        return RedirectResponse(url=error_url)
 
     # Obtener datos del usuario desde el endpoint userinfo
     try:
+        print("📥 Obteniendo información del usuario de Google...")
         resp = await oauth.google.get("https://openidconnect.googleapis.com/v1/userinfo", token=token)
         user_info = resp.json()
-        print(f"📧 Información del usuario: {user_info}")
+        print(f"✅ Información del usuario recibida: email={user_info.get('email')}, name={user_info.get('name')}")
+
     except Exception as e:
-        print(f"❌ Error obteniendo información del usuario: {e}")
-        raise HTTPException(status_code=400, detail="No se pudo obtener la información del usuario de Google")
+        print(f"❌ Error obteniendo información del usuario: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_url = f"{FRONTEND_BASE_URL}/index.html?google_login_error=true&error=userinfo_failed"
+        return RedirectResponse(url=error_url)
 
     email = user_info.get("email")
     name = user_info.get("name") or user_info.get("given_name") or "Usuario Google"
 
     if not email:
         print("❌ No se pudo obtener el email del usuario")
-        raise HTTPException(status_code=400, detail="No se pudo obtener el correo de la cuenta de Google")
+        error_url = f"{FRONTEND_BASE_URL}/index.html?google_login_error=true&error=no_email"
+        return RedirectResponse(url=error_url)
 
     # Buscar o crear el usuario en la base de datos
-    query_check = 'SELECT * FROM "Users" WHERE email = :email'
-    existing_user = execute_query(query_check, {"email": email}).first()
+    try:
+        print(f"🔍 Buscando usuario en base de datos: {email}")
+        query_check = 'SELECT * FROM "Users" WHERE email = :email'
+        existing_user = execute_query(query_check, {"email": email}).first()
 
-    if existing_user:
-        user_id = existing_user._mapping["id"]
-        print(f"✅ Usuario existente encontrado: ID {user_id}")
-    else:
-        # Insertar usuario con contraseña vacía para autenticación Google
-        print(f"👤 Creando nuevo usuario: {name} ({email})")
-        if IS_SQLITE:
-            query_insert = 'INSERT INTO "Users" (name, email, password) VALUES (:name, :email, :password)'
-            result = execute_query(query_insert, {"name": name, "email": email, "password": ""})
-            user_id = result.lastrowid
+        if existing_user:
+            user_id = existing_user._mapping["id"]
+            print(f"✅ Usuario existente encontrado: ID {user_id}")
         else:
-            query_insert = 'INSERT INTO "Users" (name, email, password) VALUES (:name, :email, :password) RETURNING id'
-            result = execute_query(query_insert, {"name": name, "email": email, "password": ""})
-            user_id = result.scalar()
-        print(f"✅ Nuevo usuario creado: ID {user_id}")
+            # Insertar usuario con contraseña vacía para autenticación Google
+            print(f"👤 Creando nuevo usuario: {name} ({email})")
+            if IS_SQLITE:
+                query_insert = 'INSERT INTO "Users" (name, email, password) VALUES (:name, :email, :password)'
+                result = execute_query(query_insert, {"name": name, "email": email, "password": ""})
+                user_id = result.lastrowid
+            else:
+                query_insert = 'INSERT INTO "Users" (name, email, password) VALUES (:name, :email, :password) RETURNING id'
+                result = execute_query(query_insert, {"name": name, "email": email, "password": ""})
+                user_id = result.scalar()
+            print(f"✅ Nuevo usuario creado: ID {user_id}")
 
-    # Redirigir al frontend con el user_id en la URL. Usar la base URL absoluta
-    # para que el navegador sea dirigido al servidor frontend (ej. localhost:8080)
+    except Exception as e:
+        print(f"❌ Error en base de datos: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_url = f"{FRONTEND_BASE_URL}/index.html?google_login_error=true&error=database_error"
+        return RedirectResponse(url=error_url)
+
+    # Redirigir al frontend con el user_id en la URL
     frontend_url = f"{FRONTEND_BASE_URL}/index.html?google_login_success=true&user_id={user_id}"
     print(f"🔄 Redirigiendo al frontend: {frontend_url}")
     return RedirectResponse(url=frontend_url)

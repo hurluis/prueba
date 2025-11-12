@@ -1,14 +1,18 @@
 services:
   backend:
-    image: julilyherrera/airbnb-backend:latest   
+    image: julilyherrera/airbnb-backend:latest
     container_name: fastapi-backend
     restart: always
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://user_fastapi:mysecretpassword@db:5432/booking_app_db
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      IS_DOCKER: "true"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-804152554719-cf5dumrtj2ggi3skavph59s01fde020p.apps.googleusercontent.com}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-GOCSQX-rrrTU3R9C1JkDFEEnkux8IfaFw1rD}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost/auth/google/callback}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost}
+      SESSION_SECRET_KEY: ${SESSION_SECRET_KEY:-super-secret-key-change-in-production-12345678}
     volumes:
       - ./backend:/app
       - ./frontend:/app/frontend:ro
