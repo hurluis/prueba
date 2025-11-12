@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+sqlalchemy
+psycopg2-binary
+authlib==1.2.0
+itsdangerous
+starlette
+httpx
+

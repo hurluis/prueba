@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de la Propiedad</title>
+  <link rel="stylesheet" href="/estilos/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" type="image/jpeg">
+</head>
+<body class="bg-gray-100">
+  <header class="header">
+    <h1 class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" alt="Logo">
+      AIRBNB JH-LS
+    </h1>
+    <nav>
+      <a href="index.html" class="back-btn">← Volver al Inicio</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <div class="property-details">
+      <img id="property-img" src="" alt="Imagen de la propiedad">
+      <h2 id="property-title"></h2>
+      <p id="property-price"></p>
+      <p id="property-description"></p>
+      <p id="property-address"></p>
+      <p id="property-rating"></p>
+      <ul id="property-amenities"></ul>
+      <a id="reserve-btn" href="reserva-bef.html" class="directions-btn">Reservar</a>
+
+      <h3>Comentarios y Calificaciones</h3>
+      <div id="feedback-section">
+      </div>
+    </div>
+
+    <div id="map" class="map-container"></div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 AIRBNB JH-LS. Todos los derechos reservados.</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="/estilos/api.js"></script>
+  <script>
+    const properties = {
+      1: {
+        title: 'Apartamento en El Poblado, Medellín',
+        price: '$450,000 COP / noche',
+        description: 'Hermoso apartamento en una de las mejores zonas de Medellín, cerca de centros comerciales y restaurantes.',
+        img: 'https://images.ctfassets.net/8lc7xdlkm4kt/33L5l2aTXdJAAEfw55n0Yh/7472faf6b498fdc11091fc65a5c69165/render-sobre-planos-saint-michel.jpg',
+        coordinates: [6.2088, -75.5679],
+        address: 'Cl. 9 #37, El Poblado, Medellín, Antioquia',
+        amenities: ['Wi-Fi', 'Cocina equipada', 'Piscina', 'Estacionamiento'],
+      },
+      2: {
+        title: 'Casa colonial en Cartagena',
+        price: '$500,000 COP / noche',
+        description: 'Encantadora casa colonial con vistas al mar, en el centro histórico de Cartagena.',
+        img: 'https://media-luna-hostel.cartagena-hotels.net/data/Photos/1080x700w/10392/1039228/1039228984/cartagena-media-luna-hostel-photo-1.JPEG',
+        coordinates: [10.422385, -75.544984],
+        address: '10-46 Media Luna 10, Getsemaní, Cartagena de Indias, Bolívar',
+        amenities: ['Wi-Fi', 'Terraza', 'Aire acondicionado', 'Desayuno incluido'],
+      },
+      3: {
+        title: 'Loft en Bogotá',
+        price: '$320,000 COP / noche',
+        description: 'Moderno loft en el centro de Bogotá, ideal para viajeros de negocios.',
+        img: 'https://latinexclusive.com/sites/default/files/styles/main_property_slide/public/api_file_downloads/3862061_1.jpg?itok=qxmdZ3oA',
+        coordinates: [4.711, -74.0721],
+        address: 'Av Suba #125-98, Bogotá',
+        amenities: ['Wi-Fi', 'Gimnasio', 'Ascensor', 'Seguridad 24/7'],
+      },
+      4: {
+        title: 'Cabaña en el Eje Cafetero',
+        price: '$800,000 COP / noche',
+        description: 'Cabaña rústica rodeada de naturaleza, perfecta para desconectarse y disfrutar del café colombiano.',
+        img: 'https://asoaturquindio.com/wp-content/uploads/2023/09/cabanas-la-herradura-4-1.jpg',
+        coordinates: [4.845385, -75.582560],
+        address: '2 kilómetros antes de termales Santa Rosa por la desviación a la Paloma vereda, San RAMON, Santa Rosa de Cabal, Risaralda (Cabañas La Herradura)',
+        amenities: ['Wi-Fi', 'Chimenea', 'Jardín', 'Cafetera'],
+      },
+      5: {
+        title: 'Hostal en Santa Marta',
+        price: '$50,000 COP / noche',
+        description: 'Hostal económico a pocos minutos de la playa, ideal para mochileros y aventureros.',
+        img: 'https://cf.bstatic.com/xdata/images/hotel/max500/151251581.jpg?k=02b942afead8be7bea67cd35453662d8a6ae787336565b884c55aca6dbedcd08&o=',
+        coordinates: [11.244911, -74.211768],
+        address: 'Cl. 14 #3-58, Comuna 2, Santa Marta, Magdalena',
+        amenities: ['Wi-Fi', 'Cocina compartida', 'Terraza', 'Desayuno incluido'],
+      }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const propertyId = params.get('id');
+    const property = properties[propertyId];
+
+    if (property) {
+      document.getElementById('property-img').src = property.img;
+      document.getElementById('property-title').textContent = property.title;
+      document.getElementById('property-price').textContent = property.price;
+      document.getElementById('property-description').textContent = property.description;
+      document.getElementById('property-address').textContent = `Dirección: ${property.address}`;
+
+      const amenitiesList = document.getElementById('property-amenities');
+      property.amenities.forEach(amenity => {
+        const li = document.createElement('li');
+        li.textContent = amenity;
+        amenitiesList.appendChild(li);
+      });
+
+      const reserveBtn = document.getElementById('reserve-btn');
+      reserveBtn.href = `reserva-bef.html?id=${propertyId}`;
+
+      const map = L.map('map').setView(property.coordinates, 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      L.marker(property.coordinates).addTo(map)
+        .bindPopup(property.title)
+        .openPopup();
+
+      loadFeedback(propertyId);
+    } else {
+      document.querySelector('.property-details').innerHTML = '<p>Propiedad no encontrada.</p>';
+    }
+
+    async function loadFeedback(propertyId) {
+      const feedbackSection = document.getElementById('feedback-section');
+
+      try {
+        const response = await apiFetch(`/feedback/${propertyId}`);
+
+        if (!response.ok) {
+          throw new Error(`Error al consultar feedback: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data.feedback) && data.feedback.length > 0) {
+          feedbackSection.innerHTML = '';
+
+          data.feedback.forEach((feedback) => {
+            const feedbackItem = document.createElement('div');
+            feedbackItem.classList.add('feedback-item');
+
+            const ratingParagraph = document.createElement('p');
+            const ratingLabel = document.createElement('strong');
+            ratingLabel.textContent = 'Calificación:';
+            const rawRating = Number.parseInt(feedback.rating, 10);
+            const safeRating = Number.isFinite(rawRating)
+              ? Math.min(Math.max(rawRating, 0), 5)
+              : 0;
+            const ratingValue = safeRating > 0 ? '⭐️'.repeat(safeRating) : 'Sin calificación';
+            ratingParagraph.appendChild(ratingLabel);
+            ratingParagraph.append(` ${ratingValue}`);
+
+            const commentParagraph = document.createElement('p');
+            const commentLabel = document.createElement('strong');
+            commentLabel.textContent = 'Comentario:';
+            commentParagraph.appendChild(commentLabel);
+            commentParagraph.append(` ${feedback.comment ?? ''}`);
+
+            feedbackItem.appendChild(ratingParagraph);
+            feedbackItem.appendChild(commentParagraph);
+
+            feedbackSection.appendChild(feedbackItem);
+          });
+        } else {
+          feedbackSection.innerHTML = '<p>No hay comentarios aún.</p>';
+        }
+      } catch (error) {
+        console.error('Error al cargar los comentarios:', error);
+        feedbackSection.innerHTML = '<p>Error al cargar los comentarios.</p>';
+      }
+    }
+  </script>
+</body>
+</html>

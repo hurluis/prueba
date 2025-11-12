@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Reserva</title>
+  <link rel="stylesheet" href="/estilos/styles.css">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" type="image/jpeg">
+</head>
+<body class="bg-gray-100">
+  <header class="header">
+    <h1 class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" alt="Logo">
+      AIRBNB JH-LS
+    </h1>
+    <nav>
+      <a href="index.html" class="back-btn">← Volver al Inicio</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <div class="property-details">
+      <div id="feedback-form" class="payment-form">
+        <h3>Deja tu Feedback</h3>
+        <form id="feedback-details" class="payment-details">
+          <div class="form-group">
+            <label for="comments">Comentarios:</label>
+            <textarea id="comments" rows="4" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="rating">Calificación (1-5):</label>
+            <select id="rating" required>
+              <option value="5">⭐️⭐️⭐️⭐️⭐️</option>
+              <option value="4">⭐️⭐️⭐️⭐️</option>
+              <option value="3">⭐️⭐️⭐️</option>
+              <option value="2">⭐️⭐️</option>
+              <option value="1">⭐️</option>
+            </select>
+          </div>
+          <button type="submit" class="reserve-btn">Enviar Feedback</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 AIRBNB JH-LS. Todos los derechos reservados.</p>
+  </footer>
+
+  <script src="/estilos/api.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get('booking_id');
+    const propertyId = params.get('property_id');
+
+    if (!bookingId || !propertyId) {
+      alert('Datos de reserva no encontrados.');
+      window.location.href = "index.html";
+    }
+
+    document.getElementById('feedback-details').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const comments = document.getElementById('comments').value;
+      const rating = parseInt(document.getElementById('rating').value);
+
+      if (!comments || !rating) {
+        alert('Completa todos los campos obligatorios.');
+        return;
+      }
+
+      try {
+        const response = await apiFetch('/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_property: propertyId,
+            comment: comments,
+            rating: rating
+          })
+        });
+
+        if (response.ok) {
+          alert('¡Feedback enviado con éxito!');
+          window.location.href = "index.html";
+        } else {
+          alert('Error al enviar el feedback.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión con el servidor.');
+      }
+    });
+  </script>
+</body>
+</html>

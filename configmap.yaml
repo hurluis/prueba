@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airbnb-config
+  namespace: default
+data:
+  POSTGRES_DB: "booking_app_db"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "airbnb_user"

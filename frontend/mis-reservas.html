@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Reservas</title>
+  <link rel="stylesheet" href="/estilos/styles.css">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" type="image/jpeg">
+</head>
+<body class="bg-gray-100">
+  <header class="header">
+    <h1 class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" alt="Logo">
+      AIRBNB JH-LS
+    </h1>
+    <nav>
+      <a href="index.html" class="back-btn">← Volver al Inicio</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h2 class="section-title">Mis Reservas</h2>
+    <div id="reservations-container" class="grid-container">
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 AIRBNB JH-LS. Todos los derechos reservados.</p>
+  </footer>
+    
+  <script src="/estilos/api.js"></script>
+  <script>
+    const properties = {
+      1: { img: 'https://images.ctfassets.net/8lc7xdlkm4kt/33L5l2aTXdJAAEfw55n0Yh/7472faf6b498fdc11091fc65a5c69165/render-sobre-planos-saint-michel.jpg', coordinates: [6.2088, -75.5679] },
+      2: { img: 'https://media-luna-hostel.cartagena-hotels.net/data/Photos/1080x700w/10392/1039228/1039228984/cartagena-media-luna-hostel-photo-1.JPEG', coordinates: [10.422385, -75.544984] },
+      3: { img: 'https://latinexclusive.com/sites/default/files/styles/main_property_slide/public/api_file_downloads/3862061_1.jpg?itok=qxmdZ3oA', coordinates: [4.711, -74.0721] },
+      4: { img: 'https://asoaturquindio.com/wp-content/uploads/2023/09/cabanas-la-herradura-4-1.jpg', coordinates: [4.845385, -75.582560] },
+      5: { img: 'https://cf.bstatic.com/xdata/images/hotel/max500/151251581.jpg?k=02b942afead8be7bea67cd35453662d8a6ae787336565b884c55aca6dbedcd08&o=', coordinates: [11.244911, -74.211768] }
+    };
+
+    const userId = localStorage.getItem('userId');
+    const numericUserId = userId ? Number(userId) : null;
+
+    if (!numericUserId) {
+      alert('Por favor, inicie sesión para ver sus reservas.');
+      window.location.href = "index.html";
+    }
+
+    function toDateOnly(value) {
+      if (!value) {
+        return null;
+      }
+
+      const normalized = value.includes('T')
+        ? value.split('T')[0]
+        : value.split(' ')[0];
+
+      const parsed = new Date(`${normalized}T00:00:00`);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function canCancelReservation(inTime) {
+      const checkInDate = toDateOnly(inTime);
+      if (!checkInDate) {
+        return false;
+      }
+      const today = new Date();
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return checkInDate > todayMidnight;
+    }
+
+    async function cancelReservation(bookingId) {
+      const confirmed = confirm('¿Deseas cancelar esta reserva?');
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        const response = await apiFetch('/cancel-reservation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ booking_id: bookingId, user_id: numericUserId })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || 'No fue posible cancelar la reserva.');
+          return;
+        }
+
+        alert(data.message || 'Reserva cancelada con éxito.');
+        await loadReservations();
+      } catch (error) {
+        console.error('Error al cancelar la reserva:', error);
+        alert('Ocurrió un error al cancelar la reserva. Intenta nuevamente.');
+      }
+    }
+
+    async function fetchActiveReservations(userId) {
+      try {
+          const response = await apiFetch(`/active-reservations/${userId}`);
+          return await response.json();
+      } catch (error) {
+          console.error('Error en reservas activas:', error);
+          return { reservations: [] };
+      }
+    }
+
+    async function fetchPastReservations(userId) {
+      try {
+          const response = await apiFetch(`/past-reservations/${userId}`);
+          return await response.json();
+      } catch (error) {
+          console.error('Error en reservas pasadas:', error);
+          return { reservations: [] };
+      }
+    }
+
+    async function loadReservations() {
+      const active = await fetchActiveReservations(numericUserId);
+      const past = await fetchPastReservations(numericUserId);
+      const container = document.getElementById('reservations-container');
+      container.innerHTML = '';
+
+      if (active.reservations.length > 0) {
+          active.reservations.forEach(reservation => renderReservation(reservation, false));
+      }
+
+
+      if (past.reservations.length > 0) {
+          past.reservations.forEach(reservation => renderReservation(reservation, true));
+      }
+
+      if (active.reservations.length === 0 && past.reservations.length === 0) {
+          container.innerHTML = '<p>No tienes reservas.</p>';
+      }
+    }
+
+    function renderReservation(reservation, isPast) {
+      const property = properties[reservation.property_id] || { img: '', coordinates: [0, 0] };
+      const card = document.createElement('div');
+      card.classList.add('card');
+
+      const canCancel = !isPast && canCancelReservation(reservation.in_time);
+
+      card.innerHTML = `
+          <img src="${property.img}" alt="${reservation.property_name}">
+          <h3>${reservation.property_name}</h3>
+          <p>Entrada: ${reservation.in_time}</p>
+          <p>Salida: ${reservation.out_time}</p>
+          <p>Estado: ${reservation.status}</p>
+          ${!isPast ?
+              `<a href="https://www.google.com/maps/dir/?api=1&destination=${property.coordinates[0]},${property.coordinates[1]}"
+                 target="_blank"
+                 class="directions-btn">
+                  Cómo llegar
+              </a>`
+              : ''}
+          ${canCancel ?
+              `<button class="cancel-btn" data-booking-id="${reservation.id}">
+                  Cancelar Reserva
+              </button>`
+              : ''}
+          ${isPast ?
+              `<button class="directions-btn"
+                      data-booking-id="${reservation.id}"
+                      data-property-id="${reservation.property_id}">
+                  Dejar Feedback
+              </button>` 
+              : ''}
+      `;
+
+      document.getElementById('reservations-container').appendChild(card);
+
+      if (isPast) {
+          card.querySelector('.directions-btn').addEventListener('click', (e) => {
+              const bookingId = e.target.dataset.bookingId;
+              const propertyId = e.target.dataset.propertyId;
+              window.location.href = `feedback.html?booking_id=${bookingId}&property_id=${propertyId}`;
+          });
+      }
+
+      if (canCancel) {
+        card.querySelector('.cancel-btn').addEventListener('click', (e) => {
+          const bookingId = Number(e.currentTarget.dataset.bookingId);
+          cancelReservation(bookingId);
+        });
+      }
+    }
+
+    loadReservations();
+  </script>
+</body>
+</html>

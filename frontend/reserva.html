@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservar Propiedad</title>
+  <link rel="stylesheet" href="/estilos/styles.css">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" type="image/jpeg">
+</head>
+<body class="bg-gray-100">
+  <header class="header">
+    <h1 class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" alt="Logo">
+      AIRBNB JH-LS
+    </h1>
+    <nav>
+      <a href="index.html" class="back-btn">← Volver al Inicio</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <div class="property-details">
+      <div id="payment-form" class="payment-form">
+        <h3>Pasarela JH-LS</h3>
+        <form id="payment-details" class="payment-details">
+          <div class="form-group">
+            <label for="card-number">Número de Tarjeta:</label>
+            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" required>
+          </div>
+          <div class="form-group">
+            <label for="card-expiry">Fecha de Expiración:</label>
+            <input type="text" id="card-expiry" placeholder="MM/YY" required>
+          </div>
+          <div class="form-group">
+            <label for="card-cvc">CVC:</label>
+            <input type="text" id="card-cvc" placeholder="123" required>
+          </div>
+          <div class="form-group">
+            <p id="reservation-details">Detalles de la reserva:</p>
+            <p id="subtotal">Subtotal: $0</p>
+          </div>
+          <button type="submit" class="reserve-btn">Pagar</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 AIRBNB JH-LS. Todos los derechos reservados.</p>
+  </footer>
+
+  <script src="/estilos/api.js"></script>
+  <script>
+
+    const reservationData = JSON.parse(localStorage.getItem('reservationData'));
+
+    if (reservationData) {
+      const reservationDetails = document.getElementById('reservation-details');
+      const subtotalElement = document.getElementById('subtotal');
+
+      reservationDetails.textContent = `Reserva desde ${reservationData.in_time} hasta ${reservationData.out_time}.`;
+      subtotalElement.textContent = `Subtotal: $${reservationData.subtotal.toLocaleString()}`;
+    } else {
+      alert('No se encontraron datos de reserva. Por favor, vuelva a la página de reserva.');
+      window.location.href = "index.html";
+    }
+    
+    document.getElementById('payment-details').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const cardNumber = document.getElementById('card-number').value;
+      const cardExpiry = document.getElementById('card-expiry').value;
+      const cardCvc = document.getElementById('card-cvc').value;
+
+      if (!cardNumber || !cardExpiry || !cardCvc) {
+          alert('Por favor, complete todos los campos de pago.');
+          return;
+      }
+
+      try {
+          // Usar API_URL para todas las peticiones
+          const response = await apiFetch(`/reserved-dates/${reservationData.property_id}`);
+          const data = await response.json();
+          const blockedDates = data.reserved_dates;
+
+          const startDate = new Date(reservationData.in_time);
+          const endDate = new Date(reservationData.out_time);
+          let currentDate = startDate;
+
+          while (currentDate <= endDate) {
+              const formattedDate = currentDate.toISOString().split('T')[0];
+              if (blockedDates.includes(formattedDate)) {
+                  alert('Una o más fechas seleccionadas ya no están disponibles. Por favor, elige otras.');
+                  window.location.href = `reserva.html?id=${reservationData.property_id}`;
+                  return;
+              }
+              currentDate.setDate(currentDate.getDate() + 1);
+          }
+
+          const reserveResponse = await apiFetch('/reserve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  ...reservationData,
+                  status: "activo"  
+              })
+          });
+
+          const result = await reserveResponse.json();
+
+          if (reserveResponse.ok) {
+              alert('Pago simulado con éxito. Reserva realizada.');
+              localStorage.removeItem('reservationData');
+              window.location.href = "index.html";
+          } else {
+              alert('Error al realizar la reserva: ' + (result.message || "Error desconocido"));
+          }
+      } catch (error) {
+          console.error('Error:', error);
+          alert('Error al realizar la reserva: ' + error.message);
+      }
+  });
+  </script>
+</body>
+</html>

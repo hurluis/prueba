@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Administración - AIRBNB JH-LS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="bg-white shadow p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold flex items-center gap-2">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111320.png" class="w-6 h-6" alt="Logo">
+      Panel de Administración
+    </h1>
+    <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded">Cerrar Sesión</button>
+  </header>
+
+  <main class="p-6">
+    <h2 class="text-2xl font-semibold mb-4">Hospedajes Registrados</h2>
+    <div id="propiedades" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </main>
+
+  <script>
+    //proteger acceso
+    const role = localStorage.getItem("userRole");
+    if (role !== "admin") {
+      alert("No tienes permisos para entrar aquí.");
+      window.location.href = "index.html";
+    }
+
+    // Lista de hospedajes 
+    const propiedades = [
+      { id: 1, name: "Apartamento en El Poblado", price: "$450,000 COP / noche", img: "https://images.ctfassets.net/8lc7xdlkm4kt/33L5l2aTXdJAAEfw55n0Yh/7472faf6b498fdc11091fc65a5c69165/render-sobre-planos-saint-michel.jpg", status: "activo" },
+      { id: 2, name: "Casa colonial en Cartagena", price: "$500,000 COP / noche", img: "https://media-luna-hostel.cartagena-hotels.net/data/Photos/1080x700w/10392/1039228/1039228984/cartagena-media-luna-hostel-photo-1.JPEG", status: "activo" },
+      { id: 3, name: "Loft en Bogotá", price: "$320,000 COP / noche", img: "https://latinexclusive.com/sites/default/files/styles/main_property_slide/public/api_file_downloads/3862061_1.jpg?itok=qxmdZ3oA", status: "activo" },
+      { id: 4, name: "Cabaña en el Eje Cafetero", price: "$800,000 COP / noche", img: "https://asoaturquindio.com/wp-content/uploads/2023/09/cabanas-la-herradura-4-1.jpg", status: "activo" },
+      { id: 5, name: "Hostal en Santa Marta", price: "$50,000 COP / noche", img: "https://cf.bstatic.com/xdata/images/hotel/max500/151251581.jpg?k=02b942afead8be7bea67cd35453662d8a6ae787336565b884c55aca6dbedcd08&o=", status: "activo" }
+    ];
+
+    // Mostrar hospedajes
+    function MostrarPropiedades() {
+      const container = document.getElementById("propiedades");
+      container.innerHTML = "";
+      propiedades.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-xl shadow-md overflow-hidden";
+
+        card.innerHTML = `
+          <img src="${p.img}" alt="${p.name}" class="w-full h-40 object-cover">
+          <div class="p-4">
+            <h3 class="text-lg font-bold">${p.name}</h3>
+            <p class="text-gray-600">${p.price}</p>
+            <p class="mt-2"><span class="font-semibold">Estado:</span> <span class="${p.status === "suspendido" ? "text-red-500" : "text-green-600"}">${p.status}</span></p>
+            <button class="mt-3 px-4 py-2 rounded ${p.status === "suspendido" ? "bg-gray-400 cursor-not-allowed" : "bg-yellow-500 hover:bg-yellow-600 text-white"}" ${p.status === "suspendido" ? "disabled" : ""} onclick="suspendProperty(${p.id})">
+              Suspender
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Función para suspender hospedaje
+    function suspenderPropiedad(id) {
+      const propiedad = propiedades.find(p => p.id === id);
+      if (propiedad) {
+        propiedad.status = "suspendido";
+        MostrarPropiedades();
+        alert(`El hospedaje "${propiedad.name}" ha sido suspendido.`);
+      }
+    }
+
+    MostrarPropiedades();
+
+    // Cerrar sesión
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

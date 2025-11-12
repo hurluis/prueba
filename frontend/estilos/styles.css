@@ -1,0 +1,444 @@
+/* Estilos generales */
+body {
+  background-color: #f3f4f6;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Header */
+.header {
+  position: relative;
+  background: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1%;
+}
+
+.header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 1%; 
+  right: 1%;
+  border-bottom: 2px solid #000000;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 16px;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #4b5563;
+}
+
+.nav-links li a:hover {
+  color: #4f46e5;
+}
+
+/* Modales */
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  text-align: center;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.modal-content button {
+  width: 100%;
+  padding: 10px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-content button:hover {
+  background: #4338ca;
+}
+
+.close {
+  cursor: pointer;
+  float: right;
+  font-size: 24px;
+}
+
+/* Mapa */
+.map-container {
+  height: 400px; 
+  width: 100%; 
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Contenido */
+.content {
+  padding: 24px;
+}
+
+/* Sección de propiedades */
+.section-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #4f46e5;
+  margin-bottom: 16px;
+  margin-left: 20px;
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 1%;
+  right: 1%;
+  border-bottom: 2px solid #000000;
+  margin-bottom: -20px;
+  margin-left: -20px;
+}
+
+/* Grid para alinear las propiedades */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(300px, 1fr));
+  gap: 20px;
+  justify-items: center; 
+}
+
+/* Tarjetas de propiedades */
+.card {
+  background: white;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;  
+  width: 100%;   
+  box-sizing: border-box; 
+}
+
+.card img {
+  width: 100%;  
+  height: 400px; 
+  max-height: 300px; 
+  border-radius: 8px;
+  margin-bottom: 12px;
+  object-fit: cover;
+}
+
+.card h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #4f46e5;
+}
+
+.card p {
+  color: #6b7280;
+  flex-grow: 1; 
+}
+
+.reserve-btn {
+  background: #4f46e5;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.reserve-btn:hover {
+  background: #4338ca;
+}
+
+/* Footer */
+.footer {
+  background: white;
+  text-align: center;
+  padding: 16px;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+/* Detalles de la propiedad */
+.property-details {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.property-details img {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.property-details h2 {
+  font-size: 24px;
+  color: #4f46e5;
+  margin-bottom: 10px;
+}
+
+.property-details p {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.property-details ul {
+  list-style: none;
+  padding: 0;
+}
+
+.property-details ul li {
+  background: #f3f4f6;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 8px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.directions-btn {
+  background: #4f46e5;
+  color: white;
+  padding: 15px 3%;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 20px;
+}
+
+.directions-btn:hover {
+  background: #4338ca;
+}
+
+.cancel-btn {
+  background: #ef4444;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background 0.2s ease-in-out;
+}
+
+.cancel-btn:hover {
+  background: #dc2626;
+}
+
+.back-btn {
+  background: #4f46e5;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.back-btn:hover {
+  background: #4338ca;
+}
+
+/* Estilos para el formulario de pago */
+#payment-form {
+  margin-top: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#payment-form h3 {
+  font-size: 18px;
+  color: #4f46e5;
+  margin-bottom: 16px;
+}
+
+#payment-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #4b5563;
+}
+
+#payment-form input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+#payment-form button {
+  width: 100%;
+  padding: 10px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#payment-form button:hover {
+  background: #4338ca;
+}
+
+/* Estilos para el formulario de reserva */
+.reservation-form {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.reservation-form .form-group {
+  margin-bottom: 15px;
+}
+
+.reservation-form label {
+  display: block;
+  margin-bottom: 5px;
+  color: #4b5563;
+}
+
+.reservation-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.reservation-form button {
+  width: 100%;
+  padding: 10px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.reservation-form button:hover {
+  background: #4338ca;
+}
+
+/* Estilos para el formulario de pago */
+.payment-form {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.payment-form h3 {
+  font-size: 18px;
+  color: #4f46e5;
+  margin-bottom: 16px;
+}
+
+.payment-form .form-group {
+  margin-bottom: 15px;
+}
+
+.payment-form label {
+  display: block;
+  margin-bottom: 5px;
+  color: #4b5563;
+}
+
+.payment-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.payment-form button {
+  width: 100%;
+  padding: 10px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.payment-form button:hover {
+  background: #4338ca;
+}
+
+.feedback-item {
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-item p {
+  margin: 5px 0;
+}

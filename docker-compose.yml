@@ -1,0 +1,46 @@
+services:
+  backend:
+    image: julilyherrera/airbnb-backend:latest   
+    container_name: fastapi-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://user_fastapi:mysecretpassword@db:5432/booking_app_db
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/frontend:ro
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+
+  frontend:
+    image: julilyherrera/airbnb-frontend:latest 
+    container_name: nginx-frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15
+    container_name: local-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: user_fastapi
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: booking_app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    name: booking-postgres-data
