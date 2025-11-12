@@ -17,6 +17,7 @@ from authlib.integrations.starlette_client import OAuth
 # Nuevas importaciones para PostgreSQL
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
+from prometheus_fastapi_instrumentator import Instrumentator
 
 load_dotenv()
 
@@ -41,6 +42,9 @@ FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:8080")
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
+
+# Instrumentación de Prometheus
+Instrumentator().instrument(app).expose(app)
 
 # Mount static files - try /app/static first, then fallback to frontend/estilos
 static_dir = BASE_DIR / "static"
