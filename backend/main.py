@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from datetime import date, datetime, timedelta
 import os
 from authlib.integrations.starlette_client import OAuth
+import httpx
 
 
 # Nuevas importaciones para PostgreSQL
@@ -65,6 +66,9 @@ app.add_middleware(
 # Configurar OAuth (Google)
 oauth = OAuth()
 
+# Crear cliente HTTP asíncrono para OAuth (necesario para Authlib con FastAPI)
+httpx_client = httpx.AsyncClient(timeout=30.0)
+
 # Verificar que las variables de entorno estén configuradas
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -78,8 +82,10 @@ else:
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
         server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-        client_kwargs={"scope": "openid email profile"},
-        authorize_state=None,  # Deshabilitar state para simplificar
+        client_kwargs={
+            "scope": "openid email profile",
+            "timeout": 30.0
+        }
     )
 
 # Configuración de la conexión a la base de datos local
